@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bộ công cụ xác suất</title>
+  <style>
+    :root{ --bg:#f7f9fc; --btn:#1976d2; --btnHover:#115293; }
+    body{ font-family: Inter, Roboto, Arial, sans-serif; margin:0; background:var(--bg); color:#0b2545; }
+    header{ display:flex; align-items:center; gap:16px; padding:12px 18px; background:linear-gradient(90deg,#ffffffaa,#e6f0ff); border-bottom:1px solid rgba(0,0,0,0.06); }
+    header h1{ margin:0; font-size:18px; }
+    .controls{ margin-left:auto; display:flex; gap:8px; }
+    .controls button{ background:var(--btn); color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; box-shadow:0 6px 18px rgba(25,118,210,0.12); }
+    .controls button:hover{ background:var(--btnHover); transform:translateY(-1px); }
+    #viewer{ width:100%; height:calc(100vh - 64px); border:0; display:block; }
+    .note{ padding:12px 18px; font-size:13px; color:#334155; }
+    .mini { padding:6px 10px; border-radius:8px; background:#fff; border:1px solid rgba(0,0,0,0.04); box-shadow:0 6px 20px rgba(16,24,40,0.04); }
+    .openBtn{ background:#10b981; }
+ 
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #0B3D91; /* xanh đậm */
+  font-weight: bold;
+}   
+ .btn {
+    color: white;
+    font-weight: bold;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  /* 🎲 Xúc xắc = Đỏ */
+  .btn.dice {
+    background-color: #E53935;
+  }
+  .btn.dice:hover {
+    background-color: #B71C1C;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  }
+
+  /* 🪙 Đồng xu = Vàng */
+  .btn.coin {
+    background-color: #FBC02D;
+    color: #0B3D91; /* chữ xanh đậm để dễ đọc */
+  }
+  .btn.coin:hover {
+    background-color: #F57F17;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  }
+
+  /* 🂡 Bài tây = Xanh lá */
+  .btn.cards {
+    background-color: #43A047;
+  }
+  .btn.cards:hover {
+    background-color: #1B5E20;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  }
+
+  /* Hiệu ứng nhấn chung */
+  .btn:active {
+    transform: scale(0.96);
+  }
+ </style>
+</head>
+<body>
+  
+<div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1rem;">
+  <!-- Dòng 1: Tiêu đề -->
+  <h1 style="font-weight:bold; color:blue; margin-bottom:0.8rem; text-align:center;">
+    BỘ CÔNG CỤ XÁC SUẤT
+  </h1>
+
+  <!-- Dòng 2: Câu trích dẫn -->
+  <div class="quote" style="margin-bottom:0.8rem; font-style:italic; text-align:center; max-width:600px;">
+    <b style="color:#1B5E20;">
+  -- Xác suất là cách làm cho “cảm giác khả năng” của con người trở nên chính xác bằng toán học. --
+</b>
+
+  </div>
+
+<!-- Dòng 3: Các nút điều khiển -->
+<div class="controls" 
+     style="display:flex; justify-content:center; gap:20px; margin-top:10px;">
+  <button class="btn dice" id="btnDice">🎲 Gieo súc sắc</button>
+  <button class="btn coin" id="btnCoin">🪙 Gieo đồng xu</button>
+  <button class="btn cards" id="btnCards">🂡 Rút bài tây</button>
+</div>
+
+ 
+
+  
+
+  <iframe id="viewer" title="Simulator viewer"></iframe>
+
+  <!-- Full HTML documents for each view are stored in hidden textareas. When a button is clicked we assign the textarea content to iframe.srcdoc. -->
+
+  <textarea id="tplDice" style="display:none; white-space:pre;" aria-hidden="true"><!DOCTYPE html>
+<html lang="vi">
+
+<head>
+<meta charset="UTF-8">
+<title>Mô phỏng gieo xúc xắc – Học xác suất</title>
+<style>
+  body { font-family: sans-serif; margin:0; background:#f0f0f0; transition: background 0.5s, color 0.5s; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#2196f3; color:#fff; }
+  header h1 { font-size:20px; margin:0; }
+  #themeBtn { background:none; border:none; cursor:pointer; font-size:22px; color:#fff; }
+  .container { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; align-items:flex-start; padding:20px; }
+  .left-col { flex:1; min-width:300px; max-width:600px; }
+  .right-col { flex:1; min-width:300px; max-width:600px; display:flex; flex-direction:column; align-items:center; }
+  .controls { margin:15px 0; }
+  select, button, input { font-size:16px; padding:6px 10px; border-radius:8px; border:1px solid #999; margin:5px; }
+  button { cursor:pointer; background:#2196f3; color:#fff; border:none; transition:0.3s; }
+  button:hover { background:#1976d2; }
+ 
+
+ .dice-container { display:flex; justify-content:center; flex-wrap:wrap; gap:30px; perspective:1000px; margin:20px 0; }
+  .die { width:80px; height:80px; position:relative; transform-style:preserve-3d;
+         transition: transform 2s cubic-bezier(0.25,1.5,0.5,1); }
+  .face { position:absolute; width:80px; height:80px; border-radius:12px;
+          display:flex; flex-wrap:wrap; justify-content:center; align-content:center; }
+  .dot { width:18px; height:18px; margin:4px; background:#fff; border-radius:50%; box-shadow:0 0 4px rgba(0,0,0,0.5); }
+  .face1 { transform:rotateY(0deg) translateZ(40px); background:#ff9999; }
+  .face2 { transform:rotateY(90deg) translateZ(40px); background:#ffcc66; }
+  .face3 { transform:rotateX(90deg) translateZ(40px); background:#ffff66; }
+  .face4 { transform:rotateX(-90deg) translateZ(40px); background:#99ff99; }
+  .face5 { transform:rotateY(-90deg) translateZ(40px); background:#66ccff; }
+  .face6 { transform:rotateY(180deg) translateZ(40px); background:#cc99ff; }
+  .dark { background:#1a1a1a; color:#eee; }
+  .dark header { background:#333; }
+  .dark #themeBtn { color:#ffeb3b; }
+  canvas { margin:20px auto; display:block; background:#fff; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.3); }
+  .dark canvas { background:#333; }
+  #sampleSpace { max-height:250px; overflow:auto; text-align:left; margin:10px auto; width:80%; padding:10px;
+                 border:1px solid #aaa; border-radius:12px; background:#fafafa; display:none; }
+  .dark #sampleSpace { background:#2a2a2a; }
+.btn-dice {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f97316, #ef4444); /* cam → đỏ */
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-dice:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.28);
+    filter: brightness(1.1);
+  }
+
+  .btn-dice:active {
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+  }
+.btn-toggle {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6); /* xanh ngọc → xanh dương */
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 20px rgba(0,0,0,0.25);
+    filter: brightness(1.08);
+  }
+
+  .btn-toggle:active {
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+
+ .btn-calc {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #22c55e, #0ea5e9); /* xanh lá → xanh ngọc */
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-calc:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 20px rgba(0,0,0,0.25);
+    filter: brightness(1.08);
+  }
+
+  .btn-calc:active {
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+  .btn-clear {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f43f5e, #fb923c); /* đỏ hồng → cam */
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-clear:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 20px rgba(0,0,0,0.25);
+    filter: brightness(1.08);
+  }
+
+  .btn-clear:active {
+    transform: translateY(-1px) scale(0.97);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>🎲 Mô phỏng gieo súc sắc – Tính xác suất đơn giản</h1>
+  <button id="themeBtn" onclick="toggleTheme()">🌙</button>
+</header>
+
+<div class="container">
+
+  <!-- Cột trái -->
+  <div class="left-col">
+
+    <!-- chọn số xúc xắc -->
+    <div class="controls">
+      <label>🛠️Chọn số xúc xắc: 
+        <select id="numDice" onchange="initDice()">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+<button class="btn-dice" onclick="rollAll()">🎲 Gieo 🎲</button>    </div>
+
+    <!-- xúc xắc -->
+    <div class="dice-container" id="diceContainer"></div>
+
+    <!-- kết quả -->
+    <h3>✅Kết quả gieo</h3>
+    <div id="results"></div>
+
+    <!-- không gian mẫu -->
+    <div style="display:flex; justify-content:flex-start; align-items:center; gap:10px; margin-top:20px;">
+      <h3 style="margin:0;">🧩Không gian mẫu</h3>
+<button class="btn-toggle" onclick="toggleSampleSpace()">👁️‍🗨️ Hiển thị / Ẩn</button>    </div>
+    <div id="sampleSpace"></div>
+
+    <!-- xác suất -->
+    <h3>🔢Tính xác suất</h3>
+    <div class="controls">
+      <label>Tổng = <input id="targetSum" type="number" style="width:80px"></label>
+<button class="btn-calc" onclick="checkTargetSum()">🖩 Tính P</button>
+     
+
+
+ <div id="sumResult" style="margin-top:8px;"></div>
+    </div>
+    <div class="controls">
+      <label>Tích = <input id="targetProd" type="number" style="width:80px"></label>
+      <button class="btn-calc" onclick="checkTargetProd()">🖩Tính P</button>
+      <div id="prodResult" style="margin-top:8px;"></div>
+    </div>
+    <div class="controls">
+<button class="btn-clear" onclick="clearResults()">🧹 Xoá kết quả</button>
+    </div>
+
+  </div>
+
+  <!-- Cột phải -->
+  <div class="right-col">
+    <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:0;">
+      <h3 style="margin:0;">Phân bố xác suất</h3>
+      <label>Chọn loại: 
+        <select id="distType" onchange="showDistribution()">
+          <option value="sum">Tổng</option>
+          <option value="prod">Tích</option>
+        </select>
+      </label>
+    </div>
+    <canvas id="chartCanvas" width="500" height="400"></canvas>
+  </div>
+
+</div>
+
+<audio id="diceSound" src="https://www.soundjay.com/misc/sounds/dice-roll-1.mp3" preload="auto"></audio>
+
+<script>
+const diceContainer=document.getElementById("diceContainer");
+const resultsDiv=document.getElementById("results");
+const canvas=document.getElementById("chartCanvas");
+const ctx=canvas.getContext("2d");
+const sampleDiv=document.getElementById("sampleSpace");
+let dice=[], currentValues=[];
+
+function createDie(){
+  const die=document.createElement("div"); die.className="die";
+  const pips={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  for(let i=1;i<=6;i++){
+    const face=document.createElement("div"); face.className="face face"+i;
+    for(let j=0;j<9;j++){
+      const cell=document.createElement("div");
+      cell.style.width="26px"; cell.style.height="26px";
+      cell.style.display="flex"; cell.style.justifyContent="center"; cell.style.alignItems="center";
+      if(pips[i].includes(j)){ const dot=document.createElement("div"); dot.className="dot"; cell.appendChild(dot);}
+      face.appendChild(cell);
+    }
+    die.appendChild(face);
+  }
+  return die;
+}
+
+function initDice(){
+  diceContainer.innerHTML=""; dice=[];
+  const n=parseInt(document.getElementById("numDice").value);
+  for(let i=0;i<n;i++){ const d=createDie(); diceContainer.appendChild(d); dice.push(d); }
+  sampleDiv.style.display="none";
+}
+
+function rollDie(die,value){
+  const orientations={1:{x:0,y:0},2:{x:0,y:-90},3:{x:-90,y:0},4:{x:90,y:0},5:{x:0,y:90},6:{x:180,y:0}};
+  const o=orientations[value];
+  const extraX=360*(2+Math.floor(Math.random()*2));
+  const extraY=360*(2+Math.floor(Math.random()*2));
+  die.style.transform=`rotateX(${o.x+extraX}deg) rotateY(${o.y+extraY}deg)`;
+}
+
+function rollAll(){
+  document.getElementById("diceSound").play();
+  currentValues=[];
+  dice.forEach(d=>{
+    const v=1+Math.floor(Math.random()*6);
+    currentValues.push(v); rollDie(d,v);
+  });
+  setTimeout(showResults,2000);
+}
+
+function showResults(){
+  const sum=currentValues.reduce((a,b)=>a+b,0);
+  const prod=currentValues.reduce((a,b)=>a*b,1);
+  resultsDiv.innerHTML=`Mặt hiện ra: ${currentValues.join(", ")} | Tổng = <b>${sum}</b>, Tích = <b>${prod}</b>`;
+  showDistribution();
+}
+
+function allOutcomes(n){
+  let res=[[]];
+  for(let i=0;i<n;i++){
+    let newRes=[];
+    res.forEach(r=>{ for(let v=1;v<=6;v++) newRes.push([...r,v]); });
+    res=newRes;
+  }
+  return res;
+}
+
+function checkTargetSum(){
+  const k=parseInt(document.getElementById("targetSum").value); if(!k) return;
+  const n=dice.length, outcomes=allOutcomes(n), total=outcomes.length;
+  const good=outcomes.filter(o=>o.reduce((a,b)=>a+b,0)===k).length;
+  document.getElementById("sumResult").innerHTML=
+    `Xác suất (Tổng=${k}) = ${good}/${total} = ${(good/total).toFixed(4)} 👉 Nghĩa là: tổng các mặt bằng ${k} khi gieo ${n} xúc xắc.`;
+}
+
+function checkTargetProd(){
+  const k=parseInt(document.getElementById("targetProd").value); if(!k) return;
+  const n=dice.length, outcomes=allOutcomes(n), total=outcomes.length;
+  const good=outcomes.filter(o=>o.reduce((a,b)=>a*b,1)===k).length;
+  document.getElementById("prodResult").innerHTML=
+    `Xác suất (Tích=${k}) = ${good}/${total} = ${(good/total).toFixed(4)} 👉 Nghĩa là: tích các mặt bằng ${k} khi gieo ${n} xúc xắc.`;
+}
+
+function showDistribution(){
+  const type=document.getElementById("distType").value;
+  const n=dice.length, outcomes=allOutcomes(n), total=outcomes.length;
+  let count={};
+  outcomes.forEach(o=>{
+    const val=(type==="sum")?o.reduce((a,b)=>a+b,0):o.reduce((a,b)=>a*b,1);
+    count[val]=(count[val]||0)+1;
+  });
+  animateChart(count,total,type);
+}
+
+function animateChart(data,total,type){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const keys=Object.keys(data).map(Number).sort((a,b)=>a-b);
+  const maxVal=Math.max(...Object.values(data));
+  const barWidth=canvas.width/keys.length;
+  let progress=0;
+  function step(){
+    progress+=0.03;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    keys.forEach((k,i)=>{
+      const val=data[k];
+      const h=(val/maxVal)*(canvas.height-60)*Math.min(progress,1);
+      const x=i*barWidth+10, y=canvas.height-h-30;
+      const grad=ctx.createLinearGradient(0,y,0,y+h);
+      grad.addColorStop(0,"#4facfe"); grad.addColorStop(1,"#00f2fe");
+      ctx.fillStyle=grad; ctx.fillRect(x,y,barWidth-20,h);
+      ctx.fillStyle="black"; ctx.textAlign="center"; ctx.font="12px sans-serif";
+      ctx.fillText(k, x+(barWidth-20)/2, canvas.height-10);
+      if(progress>=1) ctx.fillText((val/total).toFixed(3), x+(barWidth-20)/2, y-5);
+    });
+    if(progress<1) requestAnimationFrame(step);
+  }
+  step();
+}
+
+function toggleSampleSpace(){
+  const n=dice.length; if(n===0) return;
+  if(sampleDiv.style.display==="block"){ sampleDiv.style.display="none"; return; }
+  const outcomes=allOutcomes(n); const total=outcomes.length;
+  let html=`<b>Số phần tử của không gian mẫu = ${total}</b><br>`;
+  const maxShow=100;
+  html+=outcomes.slice(0,maxShow).map(o=>"("+o.join(",")+")").join(", ");
+  if(outcomes.length>maxShow){
+    html+=`... <br><button onclick="showAllOutcomes()">Xem toàn bộ</button>`;
+    window._allOutcomes=outcomes; // lưu tạm
+  }
+  sampleDiv.innerHTML=html;
+  sampleDiv.style.display="block";
+}
+
+function showAllOutcomes(){
+  const outcomes=window._allOutcomes;
+  sampleDiv.innerHTML=`<b>Tất cả ${outcomes.length} phần tử:</b><br>`+
+    outcomes.map(o=>"("+o.join(",")+")").join(", ");
+}
+
+function clearResults(){
+  document.getElementById("sumResult").innerHTML="";
+  document.getElementById("prodResult").innerHTML="";
+}
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  const btn=document.getElementById("themeBtn");
+  btn.textContent=document.body.classList.contains("dark")?"☀️":"🌙";
+}
+
+// khởi tạo mặc định 2 xúc xắc
+initDice();
+</script>
+</body>
+</html></textarea>
+
+  <textarea id="tplCoin" style="display:none; white-space:pre;" aria-hidden="true"><!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mô phỏng gieo đồng xu – Không gian mẫu</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --tile: #111827;
+      --tile2: #0e152a;
+      --ring: rgba(56,189,248,.35);
+    }
+    html, body { height: 100%; }
+   
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: radial-gradient(1000px 600px at 10% 0%, #e0f2fe 0%, #bae6fd 50%, #f8fafc 100%);
+  color: #1d4ed8; /* chữ xanh nước biển */
+}
+
+
+/* Panel sáng + viền xanh nhẹ */
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
+  border: 1px solid rgba(29,78,216,0.25);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(29,78,216,.15);
+  backdrop-filter: blur(4px);
+}
+input[type="number"] {
+  background-color: #ffffff !important;  /* nền trắng sáng */
+  color: #1e3a8a;                        /* chữ xanh biển */
+  border: 2px solid #94a3b8;             /* viền đậm hơn (xám xanh) */
+  border-radius: 10px;                   /* bo góc mềm mại */
+  padding: 8px 12px;
+  transition: all 0.25s ease;
+  -webkit-appearance: none;              
+  -moz-appearance: textfield;            
+  appearance: none;                      
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: #2563eb;                 /* viền xanh đậm hơn */
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.45); /* bóng xanh sáng hơn */
+}
+.field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #ffffff;               /* nền trắng sáng */
+  border: 1px solid rgba(29,78,216,0.25); /* viền xanh biển nhạt */
+  border-radius: 12px;               /* bo góc */
+  padding: 10px 14px;                /* khoảng cách bên trong */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06); /* bóng nhẹ */
+}
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: clamp(20px, 3.6vw, 34px); line-height: 1.15; margin: 0 0 16px; }
+    p.lead { color: var(--muted); margin-top: 4px; }
+
+
+    .controls { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 720px){ .controls{ grid-template-columns: 1.1fr .9fr 1fr 1fr 1fr; } }
+
+    label { font-size: 14px; color: var(--muted); }
+    .field { display: flex; gap: 8px; align-items: center; }
+    input[type="number"], input[type="text"], select { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.25); background: #0c1426; color: var(--text); outline: none; }
+ 
+
+    .btn { padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(56,189,248,0.35); background: linear-gradient(180deg, #0b1a2f, #091324); color: #dbeafe; font-weight: 600; cursor: pointer; letter-spacing: .2px; box-shadow: 0 6px 20px rgba(56,189,248,.15) inset, 0 2px 10px rgba(2,6,23,.4);
+      transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease; }
+    .btn:hover{ border-color: rgba(56,189,248,.6); box-shadow: 0 8px 28px rgba(56,189,248,.22) inset, 0 6px 16px rgba(2,6,23,.5); }
+    .btn:active{ transform: translateY(1px); }
+
+    .row { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+    @media (min-width: 900px){ .row { grid-template-columns: 1fr 1fr; } }
+
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .stat { background: linear-gradient(180deg, rgba(56,189,248,.08), rgba(56,189,248,.02)); border: 1px solid rgba(56,189,248,.2); border-radius: 14px; padding: 12px; text-align: center; }
+    .stat .kpi { font-size: clamp(18px,3vw,24px); font-weight: 800; }
+    .stat .lbl { font-size: 12px; color: var(--muted); }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+    .tile { background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)); border: 1px solid rgba(148,163,184,.18); border-radius: 16px; padding: 10px; position: relative; overflow: hidden; }
+    .tile:hover{ box-shadow: 0 10px 35px rgba(0,0,0,.35); border-color: rgba(148,163,184,.35); }
+    .tile .seq { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: center; padding: 8px 0; }
+    .tile .label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight: 700; letter-spacing: .6px; text-align: center; color: #a5b4fc; }
+
+    .legend { display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+    .legend .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25); }
+    .legend .dot { width: 16px; height: 16px; border-radius: 999px; box-shadow: 0 2px 0 rgba(0,0,0,.3) inset; }
+    .dot.h { background: radial-gradient(60% 60% at 35% 30%, #ffec8a, #caa32a 70%), radial-gradient(80% 80% at 60% 60%, rgba(255,255,255,.6), rgba(0,0,0,.15)); border: 1px solid #d4b645; }
+    .dot.t { background: radial-gradient(60% 60% at 35% 30%, #d1d5db, #4b5563 70%), radial-gradient(80% 80% at 60% 60%, rgba(255,255,255,.6), rgba(0,0,0,.15)); border: 1px solid #6b7280; }
+
+    .coin { width: 46px; height: 46px; display:inline-block; }
+
+    .grid-info { font-size: 13px; color: var(--muted); margin: 8px 0 2px; }
+
+    .footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 16px; }
+    .inline-note { color: #93c5fd; font-size: 12px; }
+
+    @keyframes dropBounceFlip {
+      0% { transform: translateY(-80px) rotateY(0deg); opacity: 0; }
+      60% { transform: translateY(10px) rotateY(180deg); opacity: 1; }
+      80% { transform: translateY(-5px) rotateY(270deg); }
+      100% { transform: translateY(0) rotateY(360deg); }
+    }
+    .coin.dropBounceFlip { animation: dropBounceFlip 0.8s ease forwards; }
+  
+select {
+  background-color: #ffffff !important;  /* nền trắng sáng */
+  color: #1e3a8a;                        /* chữ xanh biển */
+  border: 2px solid #94a3b8;             /* viền xám xanh đậm hơn */
+  border-radius: 10px;                   /* bo góc mềm mại */
+  padding: 8px 12px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);/* bóng nhẹ */
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: #2563eb;                 /* viền xanh đậm khi chọn */
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.45);
+}
+
+#n {
+  background-color: #ffffff !important;  /* nền trắng sáng */
+  color: #16a34a;                        /* xanh lá cây (#16a34a = green-600 Tailwind) */
+  border: 2px solid #22c55e;             /* viền xanh lá nhạt */
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+#n:focus {
+  outline: none;
+  border-color: #15803d;                 /* xanh lá đậm hơn khi focus */
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.45);
+}
+
+/* Select Thứ tự hiển thị */
+#order {
+  background-color: #ffffff !important;  /* nền trắng sáng */
+  color: #16a34a;                        /* chữ xanh lá */
+  border: 2px solid #22c55e;             /* viền xanh lá */
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+#order:focus {
+  outline: none;
+  border-color: #15803d;                 /* viền xanh lá đậm khi chọn */
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.45);
+}
+
+/* Input Nhãn H/T */
+#labels {
+  background-color: #ffffff !important; 
+  color: #16a34a;                        /* chữ xanh lá */
+  border: 2px solid #22c55e;
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+#labels:focus {
+  outline: none;
+  border-color: #15803d;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.45);
+}
+
+
+
+label[for="n"],
+label[for="order"],
+label[for="labels"] {
+  color: #065f46;   /* xanh lá đậm */
+  font-weight: 600;
+}
+
+/* Style chung cho nút */
+.btn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Nút Hiện không gian mẫu (xanh lá) */
+#btnSpace {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+}
+#btnSpace:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.45);
+  transform: translateY(-2px);
+}
+#btnSpace:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
+}
+
+/* Nút Gieo ngẫu nhiên (xanh dương) */
+#btnSim {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+}
+#btnSim:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+  transform: translateY(-2px);
+}
+#btnSim:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
+}
+
+
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Gieo đồng xu – Không gian mẫu với ảnh trực quan</h1>
+  <p class="lead">Chọn số đồng xu <em>n</em>, xem toàn bộ không gian mẫu (2<sup>n</sup> kết quả) dưới dạng chuỗi ảnh <strong>Ngửa (H)</strong> / <strong>Sấp (T)</strong>, hoặc gieo ngẫu nhiên để minh hoạ.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="field">
+        <label for="n">Số đồng xu (n)</label>
+        <input id="n" type="number" min="1" max="12" value="3" />
+      </div>
+      <div class="field">
+        <label for="order">Thứ tự hiển thị</label>
+        <select id="order">
+          <option value="lex">Từ điển (N/S)</option>
+          <option value="weight">Theo số lượng N giảm dần</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="labels">Nhãn N/S</label>
+        <select id="labels">
+          <option value="NS">Ngửa/Sấp</option>
+	<option value="HT">N/S</option>
+
+        </select>
+      </div>
+      <button class="btn" id="btnSpace">Hiện không gian mẫu</button>
+      <button class="btn" id="btnSim">Gieo ngẫu nhiên</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">Số đồng xu gieo<div class="kpi" id="kpiN">3</div><div class="lbl"></div></div>
+      <div class="stat">Số phần tử không gian mẫu n(Ω) = <div class="kpi" id="kpiOmega">8</div><div class="lbl"> </div></div>
+      <div class="stat">Xác suất mỗi kết quả bằng<div class="kpi" id="kpiExample">1/8</div><div class="lbl"></div></div>
+    </div>
+
+    <div class="grid-info">
+      <span class="legend">
+        <span class="badge"><span class="dot h"></span> Ngửa (N)</span>
+        <span class="badge"><span class="dot t"></span> Sấp (S)</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:16px">
+    <div class="panel">
+      <h3 style="margin-top:0">Không gian mẫu Ω</h3>
+      <div id="space" class="tiles"></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Gieo ngẫu nhiên</h3>
+      <div id="randomResult" class="tiles"></div>
+    </div>
+  </div>
+
+  <p class="footer">Thiết kế một file – chạy offline. Có thể dùng trình chiếu lớp học.</p>
+</div>
+
+<!-- Coin templates -->
+<svg id="tpl-head" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="coin" style="display:none">
+  <defs>
+    <radialGradient id="g1" cx="35%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#fff3a3"/>
+      <stop offset="65%" stop-color="#d9b949"/>
+      <stop offset="100%" stop-color="#9a7b19"/>
+    </radialGradient>
+    <linearGradient id="rim1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#f6e089"/>
+      <stop offset="100%" stop-color="#8f6a11"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="44" fill="url(#g1)" stroke="url(#rim1)" stroke-width="6" filter="url(#shadow)"/>
+  <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+  <text x="50" y="58" text-anchor="middle" font-size="36" font-weight="900" fill="#4b2e03">H</text>
+</svg>
+
+<svg id="tpl-tail" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="coin" style="display:none">
+  <defs>
+    <radialGradient id="g2" cx="35%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="65%" stop-color="#9aa1a9"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </radialGradient>
+    <linearGradient id="rim2" x1="0" x2="1">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="44" fill="url(#g2)" stroke="url(#rim2)" stroke-width="6" />
+  <g transform="translate(50 50)">
+    <circle r="28" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2" stroke-dasharray="2 3"/>
+    <path d="M-10 0h20" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="0" cy="-13" r="5" fill="#0f172a"/>
+    <circle cx="0" cy="13" r="5" fill="#0f172a"/>
+  </g>
+</svg>
+
+<!-- Coin sound -->
+<audio id="coinSound" preload="auto">
+  <source src="data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAA..." type="audio/mpeg">
+</audio>
+
+<script>
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+  const nInput = $('#n');
+  const orderSel = $('#order');
+  const labelsSel = $('#labels');
+  const btnSpace = $('#btnSpace');
+  const btnSim = $('#btnSim');
+  const elSpace = $('#space');
+  const elRandom = $('#randomResult');
+  const kpiN = $('#kpiN');
+  const kpiOmega = $('#kpiOmega');
+  const kpiExample = $('#kpiExample');
+  const sound = $('#coinSound');
+
+  function coinSVG(type){
+    const tpl = type === 'H' ? $('#tpl-head') : $('#tpl-tail');
+    return tpl.outerHTML.replace('style="display:none"','');
+  }
+
+  function product(arrays){
+    return arrays.reduce((acc, cur)=>{
+      const out=[]; for(const a of acc){ for(const b of cur){ out.push(a.concat([b])); } } return out;
+    }, [[]]);
+  }
+
+  function sampleSpace(n){
+    const axes = Array.from({length:n}, ()=> ['H','T']);
+    return product(axes);
+  }
+
+  function renderTiles(el, sequences, labelMode='HT'){
+    el.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    sequences.forEach(seq=>{
+      const tile = document.createElement('div'); tile.className='tile';
+      const seqWrap = document.createElement('div'); seqWrap.className='seq';
+      for(const c of seq){ seqWrap.insertAdjacentHTML('beforeend', coinSVG(c)); }
+      const lb = document.createElement('div'); lb.className='label';
+      const asText = seq.join('');
+      if(labelMode==='NS'){
+        lb.textContent = asText.replaceAll('H','Ngửa ').replaceAll('T','Sấp ').trim();
+      } else { lb.textContent = asText; }
+      tile.appendChild(seqWrap); tile.appendChild(lb); frag.appendChild(tile);
+    });
+    el.appendChild(frag);
+  }
+
+  function sortSequences(seqs, mode){
+    if(mode==='weight'){
+      return seqs.slice().sort((a,b)=>{
+        const wa = a.filter(x=>x==='H').length;
+        const wb = b.filter(x=>x==='H').length;
+        if(wb!==wa) return wb-wa;
+        return a.join('').localeCompare(b.join(''));
+      });
+    }
+    return seqs.slice().sort((a,b)=>{
+      const aa = a.map(x=>x==='H'?0:1).join('');
+      const bb = b.map(x=>x==='H'?0:1).join('');
+      return aa.localeCompare(bb);
+    });
+  }
+
+  function updateKPIs(n){
+    kpiN.textContent = n;
+    const omega = 2 ** n; kpiOmega.textContent = omega.toLocaleString('vi-VN');
+    kpiExample.textContent = `1/${omega}`;
+  }
+
+  function showSpace(){
+    const n = clampN(parseInt(nInput.value||'1',10));
+    updateKPIs(n);
+    const seqs = sampleSpace(n);
+    const sorted = sortSequences(seqs, orderSel.value);
+    renderTiles(elSpace, sorted, labelsSel.value);
+  }
+
+  function simulate(){
+    const n = clampN(parseInt(nInput.value||'1',10));
+    updateKPIs(n);
+    const seq = Array.from({length:n}, ()=> Math.random()<0.5?'H':'T');
+    elRandom.innerHTML = '';
+
+    const tile = document.createElement('div'); tile.className='tile';
+    const seqWrap = document.createElement('div'); seqWrap.className='seq';
+    
+    seq.forEach((c, i) => {
+      const coin = document.createElement('div');
+      coin.innerHTML = coinSVG(c);
+      const coinEl = coin.firstChild;
+      coinEl.classList.add('dropBounceFlip');
+      coinEl.style.animationDelay = `${i*0.15}s`;
+      coinEl.addEventListener('animationend', ()=>{
+        sound.currentTime = 0; sound.play();
+      });
+      seqWrap.appendChild(coinEl);
+    });
+
+    const lb = document.createElement('div'); lb.className='label';
+    const asText = seq.join('');
+    if(labelsSel.value==='NS'){
+      lb.textContent = asText.replaceAll('H','Ngửa ').replaceAll('T','Sấp ').trim();
+    } else { lb.textContent = asText; }
+
+    const prob = document.createElement('div'); prob.className='grid-info';
+    prob.textContent = `Xác suất P = 1/${2**n}`;
+
+    tile.appendChild(seqWrap);
+    tile.appendChild(lb);
+    tile.appendChild(prob);
+    elRandom.appendChild(tile);
+  }
+
+  function clampN(n){ if(Number.isNaN(n)) n=1; if(n<1) n=1; if(n>12) n=12; nInput.value=n; return n; }
+
+  btnSpace.addEventListener('click', showSpace);
+  btnSim.addEventListener('click', simulate);
+  nInput.addEventListener('change', showSpace);
+  orderSel.addEventListener('change', showSpace);
+  labelsSel.addEventListener('change', ()=>{ showSpace(); simulate(); });
+
+  showSpace();
+  simulate();
+</script>
+</body>
+</html></textarea>
+
+  <textarea id="tplCards" style="display:none; white-space:pre;" aria-hidden="true"><!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+ 
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Mô phỏng rút bài tây</title>
+  <style>
+    body {
+      font-family: "Times New Roman", serif;
+      margin: 20px;
+      background: #f5f5f5;
+      color: #000;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    body.dark { background: #1e1e1e; color: #f5f5f5; }
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #0B3D91; /* xanh đậm */
+  font-weight: bold;
+}   
+ h2 { margin-top: 20px; color: #8e44ad; }
+    .container { display: flex; gap: 30px; }
+    .col { flex: 1; padding: 15px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    body.dark .col { background: #2a2a2a; }
+    button, select {
+      margin: 8px;
+      padding: 8px 16px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    button { background-color: #3498db; color: white; }
+    button:hover { background-color: #2980b9; }
+    select { background: #fff; border: 1px solid #ccc; cursor: pointer; }
+    body.dark select { background: #333; color: #fff; border: 1px solid #777; }
+    #ketqua, #lichsu, #thongke, #ketquaPoker { margin-top: 15px; font-size: 16px; }
+    .card { display: inline-block; margin: 5px; }
+    .card img { width: 90px; border-radius: 6px; box-shadow: 2px 2px 6px rgba(0,0,0,0.3); transition: transform 0.3s; }
+    .card img:hover { transform: scale(1.1); }
+    #toggleTheme {
+      position: fixed; top: 15px; right: 15px;
+      background: #333; color: #fff; border-radius: 50%;
+      width: 38px; height: 38px;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer; font-size: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+    #toggleTheme:hover { background: #555; transform: rotate(20deg); }
+    .fade-card { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade-card.show { opacity: 1; transform: translateY(0); }
+    .formula { margin-top: 10px; }
+    .prob-frac { color: red; font-weight: bold; }
+    .prob-dec { color: green; font-weight: bold; }
+  
+
+
+.example-cards {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.mini-card {
+  width: 40px;
+  margin: 0 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      font-size: 14px;
+      background: #f0f0f0;
+      color: #333;
+      border-top: 1px solid #ccc;
+
+      /* chống copy / bôi đen */
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+
+</style>
+  <!-- MathJax config -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)']],   // công thức trong dòng
+        displayMath: [['$$','$$']]     // công thức xuống dòng
+      },
+      svg: { fontCache: 'global' }     // dùng SVG, render nhanh
+    };
+  </script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <div id="toggleTheme">🌙</div>
+<h1 style="color:#0B3D91; font-weight:bold; text-align:center;
+           background-color:#FFFBEA; padding:12px 20px; border-radius:10px;">
+  Mô phỏng rút bài tây — Xác suất Poker
+</h1>
+
+
+<style>
+.quote {
+  text-align: center;
+  font-size: 18px;
+  color: #d63384; /* màu tím hồng nổi bật */
+  margin: 15px 0;
+}
+
+  .btn {
+    color: white;
+    font-weight: bold;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    min-width: 95px;
+  }
+
+  /* 🎨 Mỗi nút một màu riêng */
+  .btn.draw1 { background-color: #1976D2; } /* xanh lam */
+  .btn.draw2 { background-color: #2E7D32; } /* xanh lá */
+  .btn.draw3 { background-color: #F57C00; } /* cam */
+  .btn.draw5 { background-color: #8E24AA; } /* tím */
+  .btn.reset { background-color: #D32F2F; } /* đỏ */
+
+  /* Hover đẹp */
+  .btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  }
+
+  /* Hiệu ứng nhấn */
+  .btn:active {
+    transform: scale(0.95);
+  }
+
+</style>
+
+  <div class="container">
+    <!-- Cột trái: Rút bài -->
+    <div class="col">
+      <h2>🎉Rút bài🂡</h2>
+      <label for="mode"><b>Chế độ rút:</b></label>
+      <select id="mode" onchange="capNhatThongKe()">
+        <option value="khonghoanlai">Không hoàn lại</option>
+        <option value="hoanlai">Hoàn lại</option>
+      </select>
+      <br>
+<div style="display:flex; justify-content:center; gap:12px; margin-top:15px;">
+  <button class="btn draw1" onclick="rutBai(1)">Rút 1 lá</button>
+  <button class="btn draw2" onclick="rutBai(2)">Rút 2 lá</button>
+  <button class="btn draw3" onclick="rutBai(3)">Rút 3 lá</button>
+  <button class="btn draw5" onclick="rutBai(5)">Rút 5 lá</button>
+  <button class="btn reset" onclick="choiLai()">🔄 Reset</button>
+</div>
+      <div id="thongke"></div>
+      <div id="ketqua"></div>
+      <h3>Lịch sử rút bài</h3>
+      <div id="lichsu" style="max-height:200px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- Cột phải: Xác suất Poker -->
+    <div class="col">
+      <h2>🎲Xác suất các hạng bài Poker (5 lá)</h2>
+      <select id="handType" onchange="tinhXacSuatPoker()">
+        <option value="">-- Chọn hạng bài --</option>
+        <option value="royal_flush">Thùng phá sảnh (Royal Flush)</option>
+        <option value="four_kind">Tứ quý (Four Kind)</option>
+        <option value="full_house">Cù lũ (Full House)</option>
+        <option value="flush">Thùng (Flush)</option>
+        <option value="straight">Sảnh (Straight)</option>
+        <option value="three_kind">Sám (Three of a kind)</option>
+        <option value="two_pair">Thú (2 đôi)</option>
+        <option value="one_pair">Đôi (One pair)</option>
+        <option value="high_card">Mậu thầu (High card)</option>
+      </select>
+      <div id="ketquaPoker"></div>
+    </div>
+  </div>
+
+  <script>
+    const suitMap = { "♠":"S", "♥":"H", "♦":"D", "♣":"C" };
+    const rankMap = { "A":"A", "J":"J", "Q":"Q", "K":"K", "10":"0" };
+
+    let boBai = [], lichSu = [];
+
+    function gcd(a,b){ return b===0 ? a : gcd(b, a%b); }
+    function C(n, k) { if (k > n) return 0; let res = 1; for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i; return res; }
+
+    function taoBoBai() {
+      const chat = ["♠", "♥", "♦", "♣"];
+      const so = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+      let cards = [];
+      for (let c of chat) for (let s of so) cards.push(s + c);
+      return cards;
+    }
+
+    function choiLai() {
+      boBai = taoBoBai();
+      lichSu = [];
+      document.getElementById("ketqua").innerHTML = "";
+      document.getElementById("lichsu").innerHTML = "";
+      document.getElementById("ketquaPoker").innerHTML = "";
+      capNhatThongKe();
+    }
+
+    function rutBai(n) {
+  let mode = document.getElementById("mode").value; 
+  if (mode === "khonghoanlai" && boBai.length === 0) { 
+    alert("Hết bài rồi!"); return; 
+  }
+
+  let laRut = [];
+  for (let i = 0; i < n; i++) {
+    if (mode === "khonghoanlai") {
+      if (boBai.length === 0) break;
+      let index = Math.floor(Math.random() * boBai.length);
+      laRut.push(boBai[index]);
+      boBai.splice(index, 1);
+    } else { 
+      let fullDeck = taoBoBai();
+      let index = Math.floor(Math.random() * fullDeck.length);
+      laRut.push(fullDeck[index]);
+    }
+  }
+
+ let html = "<div style='display:flex; justify-content:center; gap:8px;'>";
+laRut.forEach(card => {
+  let rank = card.slice(0, -1); 
+  let suit = card.slice(-1);   
+  let rankCode = rankMap[rank] || rank; 
+  let suitCode = suitMap[suit]; 
+  let code = rankCode + suitCode; 
+  let imgUrl = `cards/${code}.png`;  
+  html += `<div class="card"><img class="fade-card" src="${imgUrl}" alt="${card}"></div>`;
+});
+html += "</div>";
+
+  // Tính xác suất
+  let favorable = 1;
+  let total = (mode === "khonghoanlai") ? C(52, n) : Math.pow(52, n);
+  let g = gcd(favorable, total);
+  let tu = favorable / g, mau = total / g;
+  let p = favorable / total;
+
+  html += `<div class="formula">Xác xuất rút được ${n} lá trên là:
+              \\(P = \\dfrac{${tu}}{${mau}} \\;\\; \\approx ${p.toFixed(6)}\\)
+           </div>`;
+
+  const ketquaDiv = document.getElementById("ketqua");
+  ketquaDiv.innerHTML = html;
+  requestAnimationFrame(() => { 
+    document.querySelectorAll(".fade-card").forEach(img => img.classList.add("show")); 
+  });
+
+  lichSu.push(...laRut);
+  capNhatLichSu(); 
+  capNhatThongKe();
+  MathJax.typesetPromise();
+}
+
+
+    function capNhatLichSu() { document.getElementById("lichsu").innerHTML = lichSu.join(", "); }
+    function capNhatThongKe() {
+      let mode = document.getElementById("mode").value;
+      if (mode === "khonghoanlai") document.getElementById("thongke").innerText = "Số lá còn lại: " + boBai.length;
+      else document.getElementById("thongke").innerText = "Chế độ hoàn lại: luôn đủ 52 lá.";
+    }
+
+    const totalHands = C(52,5);
+
+    function tinhXacSuatPoker(){
+      const type = document.getElementById("handType").value;
+      if (!type) { document.getElementById("ketquaPoker").innerHTML = ""; return; }
+      let favorable = 0, formula = "", explain = "";
+
+      switch(type){
+        case "royal_flush":
+          favorable = 4;
+          formula = "$$4$$";
+           handName = "thùng phá sảnh";
+	explain = "Thùng phá sảnh: 10–J–Q–K–A đồng chất.";
+          break; 
+        case "four_kind":
+          favorable = 13 * C(48,1);
+          formula = "$$13 \\times C_{4}^{4} \\times 12 \\times C_{4}^{1}$$";
+           handName = "tứ quý";
+explain = "Tứ quý: 4 lá cùng hạng + 1 lá lẻ.";
+          break;
+        case "full_house":
+          favorable = 13 * C(4,3) * 12 * C(4,2);
+          formula = "$$13 \\times C_{4}^{3} \\times 12 \\times C_{4}^{2}$$";
+ handName = "Cù lũ";          
+explain = "Cù lũ: 1 bộ ba + 1 đôi.";
+          break;
+        case "flush":
+          favorable = 4 * C(13,5) - 40;
+          formula = "$$4 \\times (C_{13}^{5} - 10)$$";
+          handName = "thùng";
+ explain = "Thùng: 5 lá cùng chất, không liên tiếp.";
+          break; 
+        case "straight":
+          favorable = 10 * (4**5) - 40;
+          formula = "$$10 \\times (C_{4}^{1})^5 - 40$$";
+           handName = "sảnh";
+explain = "Sảnh: 5 lá liên tiếp khác chất.";
+          break; 
+        case "three_kind":
+          favorable = 13 * C(4,3) * C(12,2) * (4**2);
+          formula = "$$13 \\times C_{4}^{3} \\times C_{12}^{2} \\times (C_{4}^{1})^2$$";
+           handName = "sám";
+explain = "Sám: 3 lá cùng hạng + 2 lá khác.";
+          break;
+        case "two_pair":
+          favorable = C(13,2) * (C(4,2)**2) * 11 * 4;
+          formula = "$$C_{13}^{2} \\times (C_{4}^{2})^2 \\times 11 \\times C_{4}^{1}$$";
+ handName = "thú";          
+explain = "Thú: 2 đôi + 1 lá lẻ.";
+          break;
+        case "one_pair":
+          favorable = 13 * C(4,2) * C(12,3) * (4**3);
+          formula = "$$13 \\times C_{4}^{2} \\times C_{12}^{3} \\times (C_{4}^{1})^3$$";
+          explain = "Đôi: 1 đôi + 3 lá khác.";
+          break;
+        case "high_card":
+          favorable = totalHands - (4+13*C(48,1)+13*C(4,3)*12*C(4,2)+4*C(13,5)-40+(10*(4**5)-40)+13*C(4,3)*C(12,2)*(4**2)+C(13,2)*(C(4,2)**2)*11*4+13*C(4,2)*C(12,3)*(4**3));
+          formula = "$$C_{52}^{5} - (\\text{các trường hợp trên})$$";
+ handName = "mậu thầu";          
+explain = "Mậu thầu: không có đôi, sảnh, thùng…";
+          break;
+      }
+
+      let g = gcd(favorable, totalHands);
+let tu = favorable / g, mau = totalHands / g;
+let p = favorable / totalHands;
+
+// HTML kết quả
+let htmlResult = "";
+htmlResult += "<div class='formula'>Số kêt quả thuận lợi: " + formula + "</div>";
+htmlResult += "<div class='formula'>Xác suất 5 lá được chọn tạo thành một " + handName + " là:</div>";
+htmlResult += "<div class='formula' style='text-align:center;'>\\( P = \\dfrac{" + tu + "}{" + mau + "} \\;\\; \\approx \\) " +
+              "<span class='prob-dec'><b>" + p.toFixed(6) + "</b></span></div>";
+htmlResult += "<div><br><b>Giải thích:</b> " + explain + "</br></div>";
+
+// Hình minh họa cho từng loại tay bài
+let exampleCards = "";
+switch(type){
+  case "royal_flush":
+    exampleCards = ["AS","KS","QS","JS","0S"]; break;
+  case "four_kind":
+    exampleCards = ["9S","9H","9D","9C","2H"]; break;
+  case "full_house":
+    exampleCards = ["3S","3H","3D","7S","7H"]; break;
+  case "flush":
+    exampleCards = ["2H","5H","8H","0H","QH"]; break;
+  case "straight":
+    exampleCards = ["6S","7D","8H","9C","0S"]; break;
+  case "three_kind":
+    exampleCards = ["4S","4H","4D","7S","9H"]; break;
+  case "two_pair":
+    exampleCards = ["5S","5H","9D","9C","2S"]; break;
+  case "one_pair":
+    exampleCards = ["6S","6H","3D","8C","JS"]; break;
+  case "high_card":
+    exampleCards = ["2S","5H","7D","9C","QS"]; break;
+}
+
+// Thêm div hiển thị hình ảnh mini, căn giữa, fade-in
+if(exampleCards.length){
+  htmlResult += "<div class='example-cards' style='text-align:center;'>";
+  exampleCards.forEach(code => {
+    htmlResult += `<img class="mini-card fade-card" src="cards/${code}.png" alt="${code}">`;
+  });
+  htmlResult += "</div>";
+}
+
+document.getElementById("ketquaPoker").innerHTML = htmlResult;
+
+// Fade-in cho mini cards
+requestAnimationFrame(() => { 
+  document.querySelectorAll(".mini-card.fade-card").forEach(img => img.classList.add("show")); 
+});
+
+MathJax.typesetPromise();
+
+
+}
+
+    document.getElementById("toggleTheme").addEventListener("click", function(){
+      document.body.classList.toggle("dark");
+      this.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+    });
+
+    choiLai();
+  </script>
+
+</body>
+</html>
+
+
+
+</textarea>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const btnDice = document.getElementById('btnDice');
+    const btnCoin = document.getElementById('btnCoin');
+    const btnCards = document.getElementById('btnCards');
+    const btnOpen = document.getElementById('btnOpen');
+
+    function loadTemplate(id){
+      const t = document.getElementById(id);
+      if(!t) return;
+      const html = t.value || t.textContent || '';
+      viewer.srcdoc = html;
+      // store current
+      viewer._current = html;
+    }
+
+    btnDice.addEventListener('click', ()=> loadTemplate('tplDice'));
+    btnCoin.addEventListener('click', ()=> loadTemplate('tplCoin'));
+    btnCards.addEventListener('click', ()=> loadTemplate('tplCards'));
+
+
+    // load default view (xúc xắc)
+    loadTemplate('tplDice');
+  </script>
+</body>
+</html>
